@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#4F8BFF"/>
+<title>24-Hour Friend Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap');body{font-family:Inter,sans-serif}</style>
+</head>
+<body class="bg-[#F5F7FB]">
+<div class="max-w-[420px] mx-auto min-h-screen bg-white flex flex-col relative pb-20">
+<div class="p-5 flex justify-between"><div class="flex items-center gap-2"><div class="w-9 h-9 bg-[#4F8BFF] rounded-xl flex items-center justify-center text-white font-bold">24</div><b>24-Hour Friend</b></div><span class="text-xs bg-gray-100 px-3 py-1 rounded-full">FREE</span></div>
+<div id="home" class="p-5">
+<div class="bg-[#EAF1FF] rounded-[24px] p-6">
+<h1 class="text-[28px] font-bold leading-none">Talk with a friendly stranger for one day.</h1>
+<p class="text-sm text-gray-600 mt-3">Pick an interest, get matched, chat 24h only.</p>
+<p class="text-[11px] font-bold tracking-widest text-gray-500 mt-5 mb-2">PICK VIBE</p>
+<div id="ints" class="flex flex-wrap gap-2"></div>
+<button id="find" class="mt-5 w-full bg-black text-white rounded-full py-4 font-bold">Find New Friend ✨</button>
+<p id="status" class="text-center text-sm mt-2 text-gray-500 hidden"></p>
+</div>
+</div>
+<div id="chats" class="p-5 hidden"><h2 class="text-xl font-bold">Your Chats</h2><div id="list" class="mt-4 space-y-3"></div><p id="no" class="text-center mt-16 text-gray-400">No chats yet</p></div>
+<div id="room" class="hidden flex-col flex-1">
+<div class="p-4 border-b flex items-center gap-3"><button onclick="show('chats')" class="w-8 h-8 bg-gray-100 rounded-full">‹</button><div><div id="rname" class="font-bold text-sm"></div><div id="rtimer" class="text-xs text-orange-500"></div></div></div>
+<div id="msgs" class="flex-1 overflow-auto p-4 space-y-3 bg-[#F9FAFB]" style="min-height:60vh"></div>
+<div class="p-3 border-t flex gap-2"><input id="inp" placeholder="Say hi..." class="flex-1 bg-gray-100 rounded-full px-4 py-3 text-sm outline-none"/><button id="send" class="bg-black text-white w-12 h-12 rounded-full">↑</button></div>
+</div>
+<div class="fixed bottom-0 max-w-[420px] w-full bg-white border-t flex justify-around py-2">
+<button onclick="show('home')" class="px-6 py-1 rounded-full bg-black text-white text-xs">Home</button>
+<button onclick="show('chats')" class="px-6 py-1 rounded-full text-gray-400 text-xs">Chats</button>
+<button onclick="alert('Friends after 24h')" class="px-6 py-1 rounded-full text-gray-400 text-xs">Friends</button>
+</div>
+</div>
+<script>
+const interests=["Football ⚽","Music 🎧","Coding 💻","London 🇬🇧","Uni 📚","Gaming 🎮","Faith 🙏","Gym 💪"];
+let cur=null,chats=JSON.parse(localStorage.getItem('f24')||'[]'),curId=null;
+function renderI(){document.getElementById('ints').innerHTML=interests.map(i=>`<button onclick="pick('${i}')" data-i="${i}" class="px-3 py-2 rounded-full border bg-white text-xs">${i}</button>`).join('');}
+function pick(i){cur=i;document.querySelectorAll('#ints button').forEach(b=>{b.className=b.dataset.i===i?'px-3 py-2 rounded-full border bg-black text-white text-xs':'px-3 py-2 rounded-full border bg-white text-xs'});}
+function show(v){document.getElementById('home').classList.add('hidden');document.getElementById('chats').classList.add('hidden');document.getElementById('room').classList.add('hidden');document.getElementById(v).classList.remove('hidden');if(v==='chats')renderC();}
+function match(){if(!cur){alert('Pick vibe first');return;}const names=["Sam","Chloe","Musa","Priya","Jordan","Aisha","Alex","Tayo"];const n=names[Math.floor(Math.random()*names.length)];const id=Date.now().toString();const c={id,name:n,interest:cur,expires:Date.now()+86400000,messages:[{f:'sys',t:`You both like ${cur}. Say hi! 24h only.`}]};chats.unshift(c);localStorage.setItem('f24',JSON.stringify(chats));document.getElementById('status').classList.remove('hidden');document.getElementById('status').innerText='Matched with '+n+'!';setTimeout(()=>openC(id),800);}
+function renderC(){const l=document.getElementById('list'),no=document.getElementById('no');if(!chats.length){l.innerHTML='';no.classList.remove('hidden');return;}no.classList.add('hidden');l.innerHTML=chats.map(c=>{const r=c.expires-Date.now(),cl=r<=0,m=Math.max(0,Math.floor(r/60000)),last=c.messages[c.messages.length-1]?.t||'';return `<div onclick="openC('${c.id}')" class="p-4 rounded-2xl border ${cl?'opacity-60':''}"><div class="flex justify-between"><b class="text-sm">${c.name}</b><span class="text-[11px] ${cl?'text-red-500':'text-orange-500'}">${cl?'Closed':m+'m left'}</span></div><div class="text-xs text-gray-500">${c.interest}</div><div class="text-sm truncate mt-1">${last}</div></div>`}).join('');}
+function openC(id){const c=chats.find(x=>x.id===id);curId=id;document.getElementById('rname').innerText=c.name+' • '+c.interest;show('room');renderM();start();}
+function renderM(){const c=chats.find(x=>x.id===curId),b=document.getElementById('msgs');b.innerHTML=c.messages.map(m=>{if(m.f==='sys')return `<div class="text-center text-[11px] bg-yellow-50 border rounded-full py-1 px-3 w-fit mx-auto">${m.t}</div>`;return `<div class="flex ${m.f==='me'?'justify-end':'justify-start'}"><div class="${m.f==='me'?'bg-black text-white':'bg-white border'} rounded-[18px] px-4 py-2 text-sm max-w-[75%]">${m.t}</div></div>`}).join('');b.scrollTop=b.scrollHeight;}
+function send(){const i=document.getElementById('inp'),t=i.value.trim();if(!t)return;const c=chats.find(x=>x.id===curId);if(Date.now()>c.expires){alert('Closed');return;}c.messages.push({f:'me',t});setTimeout(()=>{c.messages.push({f:'them',t:["haha fr 😂","Same! London?","Love that","Wyd?","Chelsea fan? 👀","Real!"][Math.floor(Math.random()*6)]});localStorage.setItem('f24',JSON.stringify(chats));renderM();},900);localStorage.setItem('f24',JSON.stringify(chats));i.value='';renderM();}
+let iv=null;function start(){if(iv)clearInterval(iv);iv=setInterval(()=>{const c=chats.find(x=>x.id===curId);const d=c.expires-Date.now();if(d<=0){document.getElementById('rtimer').innerText='Closed';clearInterval(iv);return;}const h=Math.floor(d/3600000),m=Math.floor(d%3600000/60000),s=Math.floor(d%60000/1000);document.getElementById('rtimer').innerText=`Closes in ${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;},1000);}
+document.getElementById('find').onclick=match;document.getElementById('send').onclick=send;document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+renderI();renderC();window.show=show;window.pick=pick;window.openC=openC;
+</script>
+</body>
+</html>
